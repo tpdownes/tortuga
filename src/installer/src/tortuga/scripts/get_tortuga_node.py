@@ -33,6 +33,16 @@ logger = logging.getLogger(PUPPET_NAMESPACE)
 
 dbm = DbManager()
 
+def flatten_one_level(classes: dict):
+    new_classes = {}
+    for key, value in classes.items():
+        # if value is a not-empty dictonary, flatten first level
+        if isinstance(value, dict) and value:
+            for key2, value2 in value.items():
+                new_classes["%s::%s" % (key,key2)] = value2
+        else:
+            new_classes[key] = value
+    return new_classes
 
 def main():
     if len(sys.argv) != 2:
@@ -171,11 +181,18 @@ def get_puppet_node_yaml(session, nodeName):
             enabledKits.add(dbComponent.kit)
 
     dataDict = {}
-
     if puppet_classes:
-        dataDict['classes'] = puppet_classes
+        dataDict['classes'] = [ *puppet_classes ]
 
-    parametersDict = {}
+    # flatten = True
+    # if flatten:
+    #     dataDict['classes'] = [ *puppet_classes ]
+    #     parametersDict = flatten_one_level(puppet_classes)
+    # else:
+    #     dataDict['classes'] = puppet_classes
+    #     parametersDict = {}
+
+    parametersDict = flatten_one_level(puppet_classes)
     dataDict['parameters'] = parametersDict
 
     # software profile
